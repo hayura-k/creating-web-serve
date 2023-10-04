@@ -5,6 +5,14 @@ server = TCPServer.new('localhost', 8080)
 # 静的配信するファイルを置くディレクトリ
 STATIC_ROOT = __dir__ + '/' + Dir.glob('static')[0]
 
+MIME_TYPES = {
+  html: "text/html",
+  css: "text/css",
+  png: "image/png",
+  jpg: "image/jpg",
+  gif: "image/gif",
+}
+
 while true
   puts '==クライアントの接続を待ちます=='
   socket = server.accept
@@ -29,7 +37,10 @@ while true
     response_header += "Host: HenaServer/0.1\r\n"
     response_header += "Content-Length: #{response_body_length}\r\n"
     response_header += "Connection: Close\r\n"
-    response_header += "Content-Type: text/html\r\n"
+
+    ext = path.split('.')[-1]
+    content_type = MIME_TYPES[ext.to_sym]
+    response_header += "Content-Type: #{content_type}\r\n"
 
     response = (response_line + response_header + "\r\n" + response_body).b
 
