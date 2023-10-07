@@ -91,4 +91,13 @@ class WebServer
     jpg: "image/jpg",
     gif: "image/gif",
   }
+  def server
+    server = TCPServer.new('localhost', 8080)
+
+    while true
+      puts '==クライアントの接続を待ちます=='
+      socket = server.accept
+      socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
+    end
+  end
 end
