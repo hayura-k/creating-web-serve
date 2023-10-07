@@ -79,3 +79,7 @@ while true
 end
 
 server.close
+
+class WebServer
+
+end
