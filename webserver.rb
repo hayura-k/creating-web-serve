@@ -111,27 +111,18 @@ class WebServer
           </body>
           </html>
           EOS
-
-          # Content-Typeを指定
-          content_type = "text/html"
-          # レスポンスラインを生成
           response_line = "HTTP/1.1 200 OK\r\n"
         else
           begin
             response_body = File.read(STATIC_ROOT + path)
             response_line = "HTTP/1.1 200 OK\r\n"
-
-            ext = path.split('.')[-1]
-            content_type = MIME_TYPES[ext.to_sym]
-
           rescue Errno::EISDIR
             response_body = "<html><body><h1>404 Not Found</h1></body></html>"
             response_line = "HTTP/1.1 404 Not Found\r\n"
-
-            ext = path.split('.')[-1]
-            content_type = MIME_TYPES[ext.to_sym]
           end
         end
+
+        response_header = create_response_header(path, response_body)
       end
     end
   end
