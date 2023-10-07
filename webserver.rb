@@ -144,4 +144,21 @@ class WebServer
       method, path, http_version = request_line.split(' ')
       [method, path, http_version, request_header, request_body]
     end
+
+    def create_response_header(path, response_body)
+      content_type = create_content_type(path)
+
+      response_header = "#{Time.now.strftime("%a, %d %b %Y %H:%M:%S GMT") + "\r\n"}"
+      response_header += "Host: HenaServer/0.1\r\n"
+      response_header += "Content-Length: #{response_body.bytesize}\r\n"
+      response_header += "Connection: Close\r\n"
+      response_header += "Content-Type: #{content_type}\r\n"
+
+      response_header
+    end
+
+    def create_content_type(path)
+      ext = path.split('.')[-1]
+      MIME_TYPES[ext.to_sym]
+    end
 end
