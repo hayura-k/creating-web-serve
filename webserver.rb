@@ -98,6 +98,18 @@ class WebServer
       puts '==クライアントの接続を待ちます=='
       socket = server.accept
       socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
+
+      request = socket.recv(4096)
+      method, path, http_version, request_header, request_body = parse_http_request(request)
     end
   end
+
+  private
+
+    def parse_http_request(request)
+      request_line, remain = request.split("\r\n", 2)
+      request_header, request_body = remain.split("\r\n\r\n", 2)
+      method, path, http_version = request_line.split(' ')
+      [method, path, http_version, request_header, request_body]
+    end
 end
