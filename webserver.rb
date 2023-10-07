@@ -44,7 +44,19 @@ class WebServer
         end
 
         response_header = create_response_header(path, response_body)
+
+        response = (response_line + response_header + "\r\n" + response_body).b
+
+        puts '==レスポンスを送信します=='
+        socket.send(response, 0)
+      rescue => exception
+        puts '==サーバーが終了しました=='
+        puts exception
+      ensure
+        puts '==socketをcloseします=='
+        socket.close
       end
+      server.close
     end
   end
 
@@ -74,3 +86,5 @@ class WebServer
       MIME_TYPES[ext.to_sym]
     end
 end
+
+WebServer.new.server
