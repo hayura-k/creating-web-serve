@@ -1,63 +1,20 @@
 require 'socket'
 require 'pry-byebug'
 
-class WebServer
-  # 静的配信するファイルを置くディレクトリ
-  STATIC_ROOT = __dir__ + '/' + Dir.glob('static')[0]
+require_relative 'workerthread'
 
-  MIME_TYPES = {
-    html: "text/html",
-    css: "text/css",
-    png: "image/png",
-    jpg: "image/jpg",
-    gif: "image/gif",
-  }
+class WebServer
   def server
     server = TCPServer.new('localhost', 8080)
 
-    while true
+    loop do
       puts '==クライアントの接続を待ちます=='
       socket = server.accept
       socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
 
-      begin
-        request = socket.recv(4096)
-        method, path, http_version, request_header, request_body = parse_http_request(request)
-
-        if path == '/now'
-          response_body = <<~EOS
-          <html>
-          <body>
-            <h1>Now: "#{Time.now}"</h1>
-          </body>
-          </html>
-          EOS
-          response_line = "HTTP/1.1 200 OK\r\n"
-        else
-          begin
-            response_body = File.read(STATIC_ROOT + path)
-            response_line = "HTTP/1.1 200 OK\r\n"
-          rescue Errno::EISDIR
-            response_body = "<html><body><h1>404 Not Found</h1></body></html>"
-            response_line = "HTTP/1.1 404 Not Found\r\n"
-          end
-        end
-
-        response_header = create_response_header(path, response_body)
-
-        response = (response_line + response_header + "\r\n" + response_body).b
-
-        puts '==レスポンスを送信します=='
-        socket.send(response, 0)
-      rescue => exception
-        puts '==サーバーが終了しました=='
-        puts exception
-      ensure
-        puts '==socketをcloseします=='
-        socket.close
-      end
+      thread = WorkerThread.new(socket)
+      thread.run
     end
-
     server.close
   end
 
