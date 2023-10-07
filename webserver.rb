@@ -56,8 +56,9 @@ class WebServer
         puts '==socketをcloseします=='
         socket.close
       end
-      server.close
     end
+
+    server.close
   end
 
   private
