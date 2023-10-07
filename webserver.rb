@@ -99,8 +99,40 @@ class WebServer
       socket = server.accept
       socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, true)
 
-      request = socket.recv(4096)
-      method, path, http_version, request_header, request_body = parse_http_request(request)
+      begin
+        request = socket.recv(4096)
+        method, path, http_version, request_header, request_body = parse_http_request(request)
+
+        if path == '/now'
+          response_body = <<~EOS
+          <html>
+          <body>
+            <h1>Now: "#{Time.now}"</h1>
+          </body>
+          </html>
+          EOS
+
+          # Content-Typeを指定
+          content_type = "text/html"
+          # レスポンスラインを生成
+          response_line = "HTTP/1.1 200 OK\r\n"
+        else
+          begin
+            response_body = File.read(STATIC_ROOT + path)
+            response_line = "HTTP/1.1 200 OK\r\n"
+
+            ext = path.split('.')[-1]
+            content_type = MIME_TYPES[ext.to_sym]
+
+          rescue Errno::EISDIR
+            response_body = "<html><body><h1>404 Not Found</h1></body></html>"
+            response_line = "HTTP/1.1 404 Not Found\r\n"
+
+            ext = path.split('.')[-1]
+            content_type = MIME_TYPES[ext.to_sym]
+          end
+        end
+      end
     end
   end
 
