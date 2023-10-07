@@ -81,5 +81,14 @@ end
 server.close
 
 class WebServer
+  # 静的配信するファイルを置くディレクトリ
+  STATIC_ROOT = __dir__ + '/' + Dir.glob('static')[0]
 
+  MIME_TYPES = {
+    html: "text/html",
+    css: "text/css",
+    png: "image/png",
+    jpg: "image/jpg",
+    gif: "image/gif",
+  }
 end
