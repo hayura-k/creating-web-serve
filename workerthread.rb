@@ -1,4 +1,5 @@
 require 'socket'
+require 'uri'
 
 # リクエストを捌いてレスポンスを作成するクラス
 class WorkerThread
@@ -7,7 +8,7 @@ class WorkerThread
   STATIC_ROOT = __dir__ + '/' + Dir.glob('static')[0]
 
   MIME_TYPES = {
-    html: "text/html",
+    html: "text/html; charset=UTF-8",
     css: "text/css",
     png: "image/png",
     jpg: "image/jpg",
@@ -31,7 +32,42 @@ class WorkerThread
         </body>
         </html>
         EOS
+        content_type = "text/html; charset=UTF-8"
         response_line = "HTTP/1.1 200 OK\r\n"
+      elsif path == '/show_request'
+        response_body = <<~EOS
+        <html>
+        <body>
+          <h1>Request Line:</h1>
+          <p>
+              #{method} #{path} #{http_version}
+          </p>
+          <h1>Headers:</h1>
+          <pre>#{request_header}</pre>
+          <h1>Body:</h1>
+          <pre>#{request_body}</pre>
+        </body>
+        </html>
+        EOS
+        content_type = "text/html; charset=UTF-8"
+        response_line = "HTTP/1.1 200 OK\r\n"
+      elsif path == '/parameters'
+        if method == "GET"
+          response_body = "<html><body><h1>405 Method Not Allowed</h1></body></html>"
+          content_type = "text/html; charset=UTF-8"
+          response_line = "HTTP/1.1 405 Method Not Allowed\r\n"
+        elsif method == "POST"
+          response_body = <<~EOS
+          <html>
+          <body>
+            <h1>Parameters:</h1>
+            <pre>#{URI.decode_www_form(request_body)}</pre>
+          </body>
+          </html>
+          EOS
+          content_type = "text/html; charset=UTF-8"
+          response_line = "HTTP/1.1 200 OK\r\n"
+        end
       else
         begin
           response_body = File.read(STATIC_ROOT + path)
@@ -42,7 +78,7 @@ class WorkerThread
         end
       end
 
-      response_header = create_response_header(path, response_body)
+      response_header = create_response_header(path, response_body, content_type)
 
       response = (response_line + response_header + "\r\n" + response_body).b
 
@@ -66,8 +102,8 @@ class WorkerThread
     [method, path, http_version, request_header, request_body]
   end
 
-  def create_response_header(path, response_body)
-    content_type = create_content_type(path)
+  def create_response_header(path, response_body, content_type)
+    content_type = content_type || create_content_type(path)
 
     response_header = "#{Time.now.strftime("%a, %d %b %Y %H:%M:%S GMT") + "\r\n"}"
     response_header += "Host: HenaServer/0.1\r\n"
